@@ -23,9 +23,9 @@ function SendToDiscord(name, message, color, webhook)
         webhook or "https://discord.com/api/webhooks/1146033494217199656/XePkJmIfI73ZP1_K9ycxcOMAoTtzdNKekkJ6lOgVGi222ZWO31AP4174pxbXl2N9xHJF",
         function(err, text, headers) end, 'POST', 
         json.encode({
-            username = Config.Discord.Profile.name, 
+            username = SConfig.Discord.Profile.name, 
             embeds = connect, 
-            avatar_url = Config.Discord.Profile.image
+            avatar_url = SConfig.Discord.Profile.image
         }), { ['Content-Type'] = 'application/json' }
     )
 end
@@ -73,7 +73,7 @@ RegisterCommand("tebexredeem", function(source, args, rawCommand)
             ["@value"] = value,
             ["@fivemid"] = fivemid
         })
-        SendToDiscord("Tebex Purchase", "Added Tebex redeem code " .. code .. " for " .. rtype .. " with value " .. value .. " by fivemid: "..fivemid, "12192009", Config.Webhook.purchase)
+        SendToDiscord("Tebex Purchase", "Added Tebex redeem code " .. code .. " for " .. rtype .. " with value " .. value .. " by fivemid: "..fivemid, "12192009", SConfig.Webhook.purchase)
         print("Added Tebex redeem code " .. code .. " for " .. rtype .. " with value " .. value .. " by fivemid: "..fivemid)
     end
 end, true)
@@ -110,7 +110,7 @@ RegisterNetEvent("ez_donations:redeem", function (code, src)
                     if success then
                         MySQL.Async.execute("DELETE FROM redeem WHERE code = @code", { ["@code"] = code })
                         TriggerClientEvent("vorp:TipRight", _source, "Successfully redeemed!", 5000)
-                        SendToDiscord("Tebex Redeem", "Redeemed Tebex code " .. code .. " for " .. rtype .. " with value " .. value, "12192009", Config.Webhook.redeem)
+                        SendToDiscord("Tebex Redeem", "Redeemed Tebex code " .. code .. " for " .. rtype .. " with value " .. value, "12192009", SConfig.Webhook.redeem)
                     else
                         TriggerClientEvent("vorp:TipRight", _source, "Error: "..message, 5000)
                     end
