@@ -4,7 +4,14 @@ local using_code = {}
 -- Create the redeem table in the database if it doesn't exist
 CreateThread(function()
     MySQL.ready(function()
-        MySQL.Async.execute("CREATE TABLE IF NOT EXISTS redeem (code VARCHAR(255) PRIMARY KEY, type VARCHAR(50), value INT)")
+        MySQL.Async.execute([[CREATE TABLE IF NOT EXISTS `redeem` (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `code` VARCHAR(255) NOT NULL COLLATE 'utf8mb3_general_ci',
+            `type` VARCHAR(50) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+            `value` TEXT NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+            `fivemid` INT(11) NULL DEFAULT NULL,
+            PRIMARY KEY (`id`) USING BTREE
+        )]])
     end)
 end)
 
@@ -80,42 +87,39 @@ end, true)
 
 RegisterNetEvent("ez_donations:redeem", function (code, src)
     local _source <const> = src or source
-    if not _source or _source == 0 then
-        return
-    end
-
+    if not _source or _source == 0 then return end
     local User = Core.getUser(_source)
     if not User then
         TriggerClientEvent("vorp:TipRight", _source, "Error retrieving user data.", 5000)
         return
     end
-    
     local character = User.getUsedCharacter
     if not character then
         TriggerClientEvent("vorp:TipRight", _source, "Error retrieving character data.", 5000)
         return
     end
-    
     if not using_code[_source] then
         using_code[code] = true
         MySQL.Async.fetchAll("SELECT * FROM redeem WHERE code = @code", { ["@code"] = code }, function(result)
             if #result > 0 then
-                local row = result[1]
-                local rtype = row.type
-                local value = row.value
-                local fivemid = row.fivemid
-                
-                if Config.RedeemActions[rtype] then
-                    local success, message = Config.RedeemActions[rtype](character, value, fivemid, _source)
-                    if success then
-                        MySQL.Async.execute("DELETE FROM redeem WHERE code = @code", { ["@code"] = code })
-                        TriggerClientEvent("vorp:TipRight", _source, "Successfully redeemed!", 5000)
-                        SendToDiscord("Tebex Redeem", "Redeemed Tebex code " .. code .. " for " .. rtype .. " with value " .. value, "12192009", SConfig.Webhook.redeem)
+                for _, row in pairs(result) do
+                    local rtype = row.type
+                    local value = row.value
+                    local fivemid = row.fivemid
+                    local id = row.id
+                    
+                    if Config.RedeemActions[rtype] then
+                        local success, message = Config.RedeemActions[rtype](character, value, fivemid, _source)
+                        if success then
+                            MySQL.Async.execute("DELETE FROM redeem WHERE id = @id", { ["@id"] = id })
+                            TriggerClientEvent("vorp:TipRight", _source, "Successfully redeemed!", 5000)
+                            SendToDiscord("Tebex Redeem", "Redeemed Tebex code " .. code .. " for " .. rtype .. " with value " .. value, "12192009", SConfig.Webhook.redeem)
+                        else
+                            TriggerClientEvent("vorp:TipRight", _source, "Error: "..message, 5000)
+                        end
                     else
-                        TriggerClientEvent("vorp:TipRight", _source, "Error: "..message, 5000)
+                        TriggerClientEvent("vorp:TipRight", _source, "Error: Invalid redeem type. Contact server admin.", 5000)
                     end
-                else
-                    TriggerClientEvent("vorp:TipRight", _source, "Error: Invalid redeem type. Contact server admin.", 5000)
                 end
             else
                 TriggerClientEvent("vorp:TipRight", _source, "Error: Invalid or already used code.", 5000)
@@ -128,13 +132,12 @@ end)
 
 -- Command for players to redeem their Tebex codes
 if Config.Command then
-RegisterCommand(Config.Command, function(source, args, rawCommand)
-    local code = args[1]
-    if not code then
-        TriggerClientEvent("vorp:TipRight", source, "Usage: "..Config.Command.." <code>", 5000)
-        return
-    end
-
-    TriggerEvent("ez_donations:redeem", code, source)
-end, false)
+    RegisterCommand(Config.Command, function(source, args, rawCommand)
+        local code = args[1]
+        if not code then
+            TriggerClientEvent("vorp:TipRight", source, "Usage: "..Config.Command.." <code>", 5000)
+            return
+        end
+        TriggerEvent("ez_donations:redeem", code, source)
+    end, false)
 end
