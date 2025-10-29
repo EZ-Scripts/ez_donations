@@ -180,3 +180,28 @@ AddEventHandler("onResourceStart", function(res)
         print("[tiersub] ✅ Expired subscription purge complete.")
     end)
 end)
+
+function GetPlayerTierSub(steamid, callback)
+    local p = promise.new()
+    MySQL.Async.fetchAll("SELECT * FROM tier_subs WHERE steamid = @steamid", {
+        ["@steamid"] = steamid
+    }, function(results)
+        if #results > 0 then
+            callback(results[1].tier)
+            p:resolve(results[1].tier)
+        else
+            callback(false)
+            p:resolve(false)
+        end
+    end)
+    return Citizen.Await(p)
+end
+exports("GetPlayerTierSub", GetPlayerTierSub)
+
+function GetPlayerTierSubBySource(source, callback)
+    local steamid = GetPlayerIdentifierByType(source, "steam")
+    return GetPlayerTierSub(steamid, function(sub)
+        if callback and type(callback) == "function" then callback(sub) end
+    end)
+end
+exports("GetPlayerTierSubBySource", GetPlayerTierSubBySource)
