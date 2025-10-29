@@ -1,4 +1,4 @@
-local Core = exports.vorp_core:GetCore()
+Core = exports.vorp_core:GetCore()
 local using_code = {}
 
 -- Create the redeem table in the database if it doesn't exist
@@ -48,7 +48,7 @@ RegisterCommand("tebexredeem", function(source, args, rawCommand)
     local rtype = dec.type
     local value = dec.value
     local fivemid = dec.id
-    local quantity = tonumber(dec.quantity)
+    local quantity = 1 --tonumber(dec.quantity)
     local autoredeem = dec.autoredeem
     
     if not code or not rtype or not value or not Config.RedeemActions[rtype] or not fivemid then
@@ -141,3 +141,42 @@ if Config.Command then
         TriggerEvent("ez_donations:redeem", code, source)
     end, false)
 end
+
+
+-- Custom code for tier subs 
+AddEventHandler("onResourceStart", function(res)
+    if res ~= GetCurrentResourceName() then return end
+
+    local defaultCharLimit = 3
+
+    print("[tiersub] 🔍 Checking for expired subscriptions...")
+
+    MySQL.query([[
+        SELECT fivemid, steamid, charidentifier
+        FROM tier_subs
+        WHERE TIMESTAMPDIFF(DAY, last_updated, NOW()) > 30
+    ]], {}, function(results)
+
+        if #results == 0 then
+            print("[tiersub] ✅ No expired subscriptions.")
+            return
+        end
+
+        for _, sub in ipairs(results) do
+            -- Remove sub entry
+            MySQL.Async.execute("DELETE FROM tier_subs WHERE fivemid = @fivemid", {
+                ["@fivemid"] = sub.fivemid
+            })
+
+            -- Restore default character limit
+            MySQL.Async.execute("UPDATE users SET char = @char WHERE identifier = @steamid", {
+                ["@char"] = defaultCharLimit,
+                ["@steamid"] = sub.steamid
+            })
+
+            print(("[tiersub] ⛔ Subscription expired & removed: %s (steam: %s)"):format(sub.fivemid, sub.steamid))
+        end
+
+        print("[tiersub] ✅ Expired subscription purge complete.")
+    end)
+end)
