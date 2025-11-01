@@ -152,9 +152,9 @@ AddEventHandler("onResourceStart", function(res)
     print("[tiersub] 🔍 Checking for expired subscriptions...")
 
     MySQL.query([[
-        SELECT fivemid, steamid, charidentifier
+        SELECT *
         FROM tier_subs
-        WHERE TIMESTAMPDIFF(DAY, last_updated, NOW()) > 30
+        WHERE TIMESTAMPDIFF(DAY, last_updated, NOW()) > 33
     ]], {}, function(results)
 
         if #results == 0 then
@@ -174,6 +174,11 @@ AddEventHandler("onResourceStart", function(res)
                 ["@steamid"] = sub.steamid
             })
 
+            if sub.discordroleid and sub.discordroleid ~= "" then
+                local discordRest = exports.ez_discord:getDiscordRest()
+                discordRest:removeGuildMember("1244743098303512618", sub.discordid, sub.discordroleid)
+            end
+
             print(("[tiersub] ⛔ Subscription expired & removed: %s (steam: %s)"):format(sub.fivemid, sub.steamid))
         end
 
@@ -182,6 +187,10 @@ AddEventHandler("onResourceStart", function(res)
 end)
 
 function GetPlayerTierSub(steamid, callback)
+    if not steamid then
+        if callback and type(callback) == "function" then callback(false) end
+        return false
+    end
     local p = promise.new()
     MySQL.Async.fetchAll("SELECT * FROM tier_subs WHERE steamid = @steamid", {
         ["@steamid"] = steamid

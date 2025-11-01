@@ -8,10 +8,23 @@ Config.RedeemActions = {
     tier_subs = function(character, value, fivemid, src)
         local defaultCharLimit = 3
         local tiers = {
-            ruby = { gold = 10 },
-            sapphire = { charlimit = 4, gold = 25 },
-            emerald = {  },
-            diamond = { charlimit = 5, gold = 80 }
+            ruby = {
+                gold = 10,
+                discordrole = "1426786094233419836",
+            },
+            sapphire = {
+                charlimit = 4,
+                gold = 25,
+                discordrole = "1426786135878930492",
+            },
+            emerald = {
+                discordrole = "1426786026587820053",
+            },
+            diamond = {
+                charlimit = 5,
+                gold = 80,
+                discordrole = "1426786193793744938",
+            }
         }
 
         -- Validate input
@@ -95,6 +108,7 @@ Config.RedeemActions = {
         -- Online player handling
         local steamid = GetPlayerIdentifierByType(src, "steam")
         local fivemid_player = GetPlayerIdentifierByType(src, "fivem")
+        local discordid = GetPlayerIdentifierByType(src, "discord")
 
         if not (fivemid_player and fivemid_player == "fivem:" .. fivemid) then
             print("[tiersub] ⚠ FiveM ID mismatch for src:", src)
@@ -106,12 +120,19 @@ Config.RedeemActions = {
             return false, "Character data not found."
         end
 
+        if not discordid then
+            print("[tiersub] ⚠ Discord ID not found for src:", src)
+            return false, "Discord ID not found. Please ensure Discord is linked and on before you open game."
+        end
+        -- only keep discord id
+        discordid = string.gsub(discordid, "discord:", "")
+
         -- Apply for online players
         if isRemove then return removeSub(steamid, fivemid) else
             -- Create or update sub record
             MySQL.Async.execute([[
-                INSERT INTO tier_subs (fivemid, steamid, tier, charidentifier)
-                VALUES (@fivemid, @steamid, @tier, @charidentifier)
+                INSERT INTO tier_subs (fivemid, steamid, tier, charidentifier, discordid, discordroleid)
+                VALUES (@fivemid, @steamid, @tier, @charidentifier, @discordid, @discordroleid)
                 ON DUPLICATE KEY UPDATE 
                     tier = VALUES(tier),
                     last_updated = CURRENT_TIMESTAMP
@@ -119,7 +140,9 @@ Config.RedeemActions = {
                 ["@fivemid"] = fivemid,
                 ["@steamid"] = steamid,
                 ["@tier"] = value,
-                ["@charidentifier"] = character.charidentifier
+                ["@charidentifier"] = character.charidentifier,
+                ["@discordid"] = discordid,
+                ["@discordroleid"] = tierData.discordrole or ""
             })
 
             if tierData.charlimit then
@@ -130,6 +153,10 @@ Config.RedeemActions = {
             end
             if tierData.gold then
                 character.addCurrency(1, tierData.gold)
+            end
+            if tierData.discordrole then
+                local discordRest = exports.ez_discord:getDiscordRest()
+                discordRest:addGuildMemberRoleToPlayer("1244743098303512618", src, tierData.discordrole)
             end
 
             print(("[tiersub] 💎 Applied %s tier to %s (added %d gold, char limit %d)"):format(
