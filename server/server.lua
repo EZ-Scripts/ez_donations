@@ -214,3 +214,11 @@ function GetPlayerTierSubBySource(source, callback)
     end)
 end
 exports("GetPlayerTierSubBySource", GetPlayerTierSubBySource)
+
+RegisterNetEvent("ez_donations:requestteir", function()
+    local _source <const> = source
+    if _source == 0 then return end
+    GetPlayerTierSubBySource(_source, function(tier)
+        TriggerClientEvent("ez_donations:setteir", _source, tier)
+    end)
+end)

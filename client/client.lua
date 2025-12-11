@@ -38,3 +38,25 @@ TriggerEvent("chat:addSuggestion", "/".. Config.Command, "Redeem a Tebex code", 
     { name = "code", help = "Tebex transaction id" }
 })
 end
+
+local teir = nil
+RegisterNetEvent("ez_donations:setteir", function(tier)
+    teir = tier
+end)
+
+function GetPlayerTierSub(callback)
+    if not teir then
+        TriggerServerEvent("ez_donations:requestteir")
+        local timeout = 0
+        while not teir do
+            Citizen.Wait(100)
+            timeout = timeout + 100
+            if timeout >= 5000 then
+                break
+            end
+        end
+    end
+    if callback and type(callback) == "function" then callback(teir) end
+    return teir
+end
+exports("GetPlayerTierSub", GetPlayerTierSub)
