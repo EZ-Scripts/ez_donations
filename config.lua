@@ -241,4 +241,13 @@ Config.RedeemActions = {
         end)
         return false, "Character slot addition not processed. Contact server admin."
     end,
+    vpnaccess = function(character, value, fivemid, src)
+        MySQL.Async.execute([[
+            INSERT IGNORE INTO vpn_access (fivemid)
+            VALUES (@fivemid)
+        ]], {
+            ["@fivemid"] = fivemid
+        })
+        return true, "VPN access granted for FiveM ID " .. fivemid
+    end,
 }
