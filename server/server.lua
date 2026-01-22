@@ -88,6 +88,10 @@ end, true)
 RegisterNetEvent("ez_donations:redeem", function (code, src)
     local _source <const> = src or source
     if not _source or _source == 0 then return end
+    if not code then
+        TriggerClientEvent("vorp:TipRight", _source, "Usage: /redeem <code>", 5000)
+        return
+    end
     local User = Core.getUser(_source)
     if not User then
         TriggerClientEvent("vorp:TipRight", _source, "Error retrieving user data.", 5000)
