@@ -1,6 +1,8 @@
 Core = exports.vorp_core:GetCore()
 local using_code = {}
 
+local discordRest = nil
+
 -- Create the redeem table in the database if it doesn't exist
 CreateThread(function()
     MySQL.ready(function()
@@ -178,18 +180,43 @@ RegisterCommand("subredeem", function(source, args, rawCommand)
         print("This command can only be run by the server console (source 0).")
         return
     end
-    print(args[1])
     local dec = json.decode(args[1])
     local code = dec.code
     local tier = dec.tier
-    local charid = dec.charid
+    local charid = tonumber(dec.charid)
     local fivemid = dec.id
     
     if not code or not tier or not charid or not tiers[tier] or not fivemid then
         print("Usage: subredeem <code> <tier: emerald|diamond|ruby|sapphire> <charid> <id>")
         return
     end
+
     local tierData = tiers[tier]
+
+    if tierData.discordrole then
+        MySQL.Async.fetchScalar(
+        "SELECT discordid FROM characters WHERE charidentifier = @charidentifier",
+        {
+            ["@charidentifier"] = charid
+        },
+        function(discordid)
+            if discordid then
+                MySQL.Async.execute(
+                    "INSERT INTO tier_subs (discordid, tier, last_updated) VALUES (@discordid, @tier, NOW())",
+                    {
+                        ["@discordid"] = discordid,
+                        ["@tier"] = tier
+                    }
+                )
+                if discordRest == nil then 
+                    discordRest = exports.ez_discord:getDiscordRest()
+                end
+                discordRest:addGuildMemberRole(Config.GuildId, discordid, tierData.discordrole)
+            else
+                print("No discordid found for charidentifier:", charid)
+            end
+        end)
+    end
 
     if tierData.currency then
         local user = Core.getUserByCharId(charid)
@@ -240,9 +267,10 @@ AddEventHandler("onResourceStart", function(res)
             MySQL.Async.execute("DELETE FROM tier_subs WHERE id = @id", {
                 ["@id"] = sub.id
             })
-
             if sub.discordid and sub.discordid ~= "" and sub.tier and tiers[sub.tier] and tiers[sub.tier].discordrole then
-                local discordRest = exports.ez_discord:getDiscordRest()
+                if discordRest == nil then 
+                    discordRest = exports.ez_discord:getDiscordRest()
+                end
                 discordRest:removeGuildMemberRole(Config.GuildId, sub.discordid, tiers[sub.tier].discordrole)
             end
 
