@@ -146,12 +146,81 @@ if Config.Command then
     end, false)
 end
 
+local tiers = {
+    emerald = {
+        discordrole = "1426786026587820053",
+    },
+    ruby = {
+        currency = {
+            --["0"] = 100, -- money
+            ["1"] = 10, -- gold
+        },
+        discordrole = "1426786094233419836",
+    },
+    sapphire = {
+        currency = {
+            --["0"] = 100, -- money
+            ["1"] = 15, -- gold
+        },
+        discordrole = "1426786135878930492",
+    },
+    diamond = {
+        currency = {
+            --["0"] = 100, -- money
+            ["1"] = 45, -- gold
+        },
+        discordrole = "1426786193793744938",
+    }
+}
+
+RegisterCommand("subredeem", function(source, args, rawCommand)
+    if source ~= 0 then
+        print("This command can only be run by the server console (source 0).")
+        return
+    end
+    print(args[1])
+    local dec = json.decode(args[1])
+    local code = dec.code
+    local tier = dec.tier
+    local charid = dec.charid
+    local fivemid = dec.id
+    
+    if not code or not tier or not charid or not tiers[tier] or not fivemid then
+        print("Usage: subredeem <code> <tier: emerald|diamond|ruby|sapphire> <charid> <id>")
+        return
+    end
+    local tierData = tiers[tier]
+
+    if tierData.currency then
+        local user = Core.getUserByCharId(charid)
+        local character = nil
+        if user then character = user.getUsedCharacter end
+        if character and character.charidentifier == charid then
+            for k, v in pairs(tierData.currency) do
+                character.addCurrency(tonumber(k), v)
+            end
+        else
+            for k, v in pairs(tierData.currency) do
+                if tonumber(k) == 1 then -- gold
+                    MySQL.Async.execute("UPDATE characters SET gold = gold + @gold WHERE charidentifier = @charidentifier", {
+                        ["@gold"] = v,
+                        ["@charidentifier"] = charid
+                    })
+                elseif tonumber(k) == 0 then -- money
+                    MySQL.Async.execute("UPDATE characters SET money = money + @money WHERE charidentifier = @charidentifier", {
+                        ["@money"] = v,
+                        ["@charidentifier"] = charid
+                    })
+                end
+            end
+        end
+    end
+    
+end, true)
 
 -- Custom code for tier subs 
 AddEventHandler("onResourceStart", function(res)
     if res ~= GetCurrentResourceName() then return end
-
-    local defaultCharLimit = 3
 
     print("[tiersub] 🔍 Checking for expired subscriptions...")
 
@@ -168,61 +237,18 @@ AddEventHandler("onResourceStart", function(res)
 
         for _, sub in ipairs(results) do
             -- Remove sub entry
-            MySQL.Async.execute("DELETE FROM tier_subs WHERE fivemid = @fivemid", {
-                ["@fivemid"] = sub.fivemid
+            MySQL.Async.execute("DELETE FROM tier_subs WHERE id = @id", {
+                ["@id"] = sub.id
             })
 
-            -- Restore default character limit
-            MySQL.Async.execute("UPDATE users SET char = @char WHERE identifier = @steamid", {
-                ["@char"] = defaultCharLimit,
-                ["@steamid"] = sub.steamid
-            })
-
-            if sub.discordroleid and sub.discordroleid ~= "" then
+            if sub.discordid and sub.discordid ~= "" and sub.tier and tiers[sub.tier] and tiers[sub.tier].discordrole then
                 local discordRest = exports.ez_discord:getDiscordRest()
-                discordRest:removeGuildMember("1244743098303512618", sub.discordid, sub.discordroleid)
+                discordRest:removeGuildMemberRole(Config.GuildId, sub.discordid, tiers[sub.tier].discordrole)
             end
 
             print(("[tiersub] ⛔ Subscription expired & removed: %s (steam: %s)"):format(sub.fivemid, sub.steamid))
         end
 
         print("[tiersub] ✅ Expired subscription purge complete.")
-    end)
-end)
-
-function GetPlayerTierSub(steamid, callback)
-    if not steamid then
-        if callback and type(callback) == "function" then callback(false) end
-        return false
-    end
-    local p = promise.new()
-    MySQL.Async.fetchAll("SELECT * FROM tier_subs WHERE steamid = @steamid", {
-        ["@steamid"] = steamid
-    }, function(results)
-        if #results > 0 then
-            callback(results[1].tier)
-            p:resolve(results[1].tier)
-        else
-            callback(false)
-            p:resolve(false)
-        end
-    end)
-    return Citizen.Await(p)
-end
-exports("GetPlayerTierSub", GetPlayerTierSub)
-
-function GetPlayerTierSubBySource(source, callback)
-    local steamid = GetPlayerIdentifierByType(source, "steam")
-    return GetPlayerTierSub(steamid, function(sub)
-        if callback and type(callback) == "function" then callback(sub) end
-    end)
-end
-exports("GetPlayerTierSubBySource", GetPlayerTierSubBySource)
-
-RegisterNetEvent("ez_donations:requestteir", function()
-    local _source <const> = source
-    if _source == 0 then return end
-    GetPlayerTierSubBySource(_source, function(tier)
-        TriggerClientEvent("ez_donations:setteir", _source, tier)
     end)
 end)
