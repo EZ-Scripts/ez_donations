@@ -38,3 +38,18 @@ TriggerEvent("chat:addSuggestion", "/".. Config.Command, "Redeem a Tebex code", 
     { name = "code", help = "Tebex transaction id" }
 })
 end
+
+RegisterCommand("mycharid", function(source, args, rawCommand)
+    local cid = LocalPlayer.state.Character.CharId
+    if cid then
+        TriggerEvent("chat:addMessage", {
+            color = {255, 0, 0},
+            multiline = true,
+            args = {"Your Character ID is: " .. cid}
+        })
+        TriggerEvent("vorp:TipRight", "Your Character ID is: " .. cid, 10000)
+    end
+end, false)
+
+TriggerEvent("chat:addSuggestion", "/mycharid", "Show your character ID", {
+})

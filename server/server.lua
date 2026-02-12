@@ -202,16 +202,19 @@ RegisterCommand("subredeem", function(source, args, rawCommand)
         function(discordid)
             if discordid then
                 MySQL.Async.execute(
-                    "INSERT INTO tier_subs (discordid, tier, last_updated) VALUES (@discordid, @tier, NOW())",
+                    [[
+                        INSERT INTO tier_subs (discordid, tier, last_updated)
+                        VALUES (@discordid, @tier, NOW())
+                        ON DUPLICATE KEY UPDATE
+                            last_updated = NOW()
+                    ]],
                     {
                         ["@discordid"] = discordid,
                         ["@tier"] = tier
                     }
                 )
-                if discordRest == nil then 
-                    discordRest = exports.ez_discord:getDiscordRest()
-                end
-                discordRest:addGuildMemberRole(Config.GuildId, discordid, tierData.discordrole)
+
+                exports['ez_discord']:addGuildMemberRole(discordid, tierData.discordrole)
             else
                 print("No discordid found for charidentifier:", charid)
             end
@@ -222,7 +225,7 @@ RegisterCommand("subredeem", function(source, args, rawCommand)
         local user = Core.getUserByCharId(charid)
         local character = nil
         if user then character = user.getUsedCharacter end
-        if character and character.charidentifier == charid then
+        if character and tonumber(character.charidentifier) == tonumber(charid) then
             for k, v in pairs(tierData.currency) do
                 character.addCurrency(tonumber(k), v)
             end
@@ -268,10 +271,7 @@ AddEventHandler("onResourceStart", function(res)
                 ["@id"] = sub.id
             })
             if sub.discordid and sub.discordid ~= "" and sub.tier and tiers[sub.tier] and tiers[sub.tier].discordrole then
-                if discordRest == nil then 
-                    discordRest = exports.ez_discord:getDiscordRest()
-                end
-                discordRest:removeGuildMemberRole(Config.GuildId, sub.discordid, tiers[sub.tier].discordrole)
+                exports['ez_discord']:removeGuildMemberRole(sub.discordid, tiers[sub.tier].discordrole)
             end
 
             print(("[tiersub] ⛔ Subscription expired & removed: %s (steam: %s)"):format(sub.fivemid, sub.steamid))
