@@ -16,6 +16,26 @@ Config.RedeemActions = {
         print("Added " .. value .. " gold to character ID " .. character.charIdentifier)
         return true, "Added " .. value .. " gold to character ID " .. character.charIdentifier
     end,
+    pedscale = function(character, value, fivemid, src)
+        if not character then
+            print("Error: character is nil")
+            return false, "Character is nil. Contact server admin."
+        end
+        if not src then
+            print("Error: src is nil")
+            return false, "source is nil. Contact server admin."
+        end
+        value = tonumber(value) or 1
+        local skin = character.skin
+        skin = json.decode(skin)
+        skin.Scale = value
+        skin = json.encode(skin)
+        character.updateSkin(skin)
+        TriggerClientEvent("vorpcharacter:updateCache", src, skin, nil)
+        character.SaveCharacterInDb()
+        print("Set ped scale to " .. value .. " for character ID " .. character.charIdentifier)
+        return true, "Set ped scale to " .. value .. " for character ID " .. character.charIdentifier
+    end,
     reborn = function(character, value, fivemid, src)
         value = tonumber(value) or 0
         if not src then
