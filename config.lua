@@ -32,7 +32,6 @@ Config.RedeemActions = {
         skin = json.encode(skin)
         character.updateSkin(skin)
         TriggerClientEvent("vorpcharacter:updateCache", src, skin, nil)
-        character.SaveCharacterInDb()
         print("Set ped scale to " .. value .. " for character ID " .. character.charIdentifier)
         return true, "Set ped scale to " .. value .. " for character ID " .. character.charIdentifier
     end,

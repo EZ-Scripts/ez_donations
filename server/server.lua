@@ -192,7 +192,7 @@ RegisterCommand("subredeem", function(source, args, rawCommand)
     end
 
     local tierData = tiers[tier]
-
+    local user = Core.getUserByCharId(charid)
     if tierData.discordrole then
         MySQL.Async.fetchScalar(
         "SELECT discordid FROM characters WHERE charidentifier = @charidentifier",
@@ -215,6 +215,9 @@ RegisterCommand("subredeem", function(source, args, rawCommand)
                 )
 
                 exports['ez_discord']:addGuildMemberRole(discordid, tierData.discordrole)
+                if user then
+                    exports['ez_discord']:GetMemberBySource(user.source)
+                end
             else
                 print("No discordid found for charidentifier:", charid)
             end
@@ -222,10 +225,9 @@ RegisterCommand("subredeem", function(source, args, rawCommand)
     end
 
     if tierData.currency then
-        local user = Core.getUserByCharId(charid)
         local character = nil
         if user then character = user.getUsedCharacter end
-        if character and tonumber(character.charidentifier) == tonumber(charid) then
+        if character then
             for k, v in pairs(tierData.currency) do
                 character.addCurrency(tonumber(k), v)
             end
