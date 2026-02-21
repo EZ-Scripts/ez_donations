@@ -16,6 +16,23 @@ Config.RedeemActions = {
         print("Added " .. value .. " gold to character ID " .. character.charIdentifier)
         return true, "Added " .. value .. " gold to character ID " .. character.charIdentifier
     end,
+    charslot = function(character, value, fivemid, src)
+        if not character then
+            print("Error: character is nil")
+            return false, "Character is nil. Contact server admin."
+        end
+        value = tonumber(value) or 0
+        local user = Core.getUser(src)
+        if not user then
+            print("Error: user is nil")
+            return false, "User is nil. Contact server admin."
+        end
+        local charNum = user.getCharperm
+        if charNum + 1 > 5 then return false, "You cannot have more than 5 character slots" end
+        user.setCharperm(charNum + 1)
+        print("Set character slot to " .. (charNum + 1) .. " for user ID " .. src)
+        return true, "Set character slot to " .. (charNum + 1) .. " for user ID " .. src
+    end,
     pedscale = function(character, value, fivemid, src)
         if not character then
             print("Error: character is nil")

@@ -172,6 +172,12 @@ local tiers = {
             ["1"] = 45, -- gold
         },
         discordrole = "1426786193793744938",
+    },
+    topg = {
+        currency = {
+            ["1"] = 120
+        },
+        discordrole = "1474157990067306730"
     }
 }
 
