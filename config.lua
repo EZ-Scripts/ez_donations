@@ -16,6 +16,20 @@ Config.RedeemActions = {
         print("Added " .. value .. " gold to character ID " .. character.charIdentifier)
         return true, "Added " .. value .. " gold to character ID " .. character.charIdentifier
     end,
+    inventoryincrease = function(character, value, fivemid, src)
+        if not character then
+            print("Error: character is nil")
+            return false, "Character is nil. Contact server admin."
+        end
+        if not src then
+            print("Error: src is nil")
+            return false, "source is nil. Contact server admin."
+        end
+        value = tonumber(value) or 1
+        character.updateInvCapacity(value)
+        print("Increased inventory capacity by " .. value .. " for character ID " .. character.charIdentifier)
+        return true, "Increased inventory capacity by " .. value .. " for character ID " .. character.charIdentifier
+    end,
     charslot = function(character, value, fivemid, src)
         if not character then
             print("Error: character is nil")
