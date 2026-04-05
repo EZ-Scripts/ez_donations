@@ -2,11 +2,11 @@ Config = {}
 Config.Command = "redeem"
 Config.GuildId = "1244743098303512618"
 Config.RedeemActions = {
-    test = function(character, value, fivemid, src)
+    test = function(character, value, fivemid, src, code)
         SendToDiscord("Tebex Redeem", "Test redeem action executed for data...\nCharacter ID: " .. (character and character.charIdentifier or "") .. "\nValue: " .. (value or "") .. "\nFiveM ID: " .. (fivemid or ""), "12192009", "https://discord.com/api/webhooks/1432583516024995981/lHSjCy4ZbyfMmUbgLQ7ds9uIQb9jKsVsXrEyfrHAEQxOoH5RE-cX3nM6mllTu3hji9gF")
         return true, "Test redeem action executed."
     end,
-    gold = function(character, value, fivemid, src)
+    gold = function(character, value, fivemid, src, code)
         if not character then
             print("Error: character is nil")
             return false, "Character is nil. Contact server admin."
@@ -30,7 +30,7 @@ Config.RedeemActions = {
         print("Increased inventory capacity by " .. value .. " for character ID " .. character.charIdentifier)
         return true, "Increased inventory capacity by " .. value .. " for character ID " .. character.charIdentifier
     end,
-    charslot = function(character, value, fivemid, src)
+    charslot = function(character, value, fivemid, src, code)
         if not character then
             print("Error: character is nil")
             return false, "Character is nil. Contact server admin."
@@ -47,7 +47,7 @@ Config.RedeemActions = {
         print("Set character slot to " .. (charNum + 1) .. " for user ID " .. src)
         return true, "Set character slot to " .. (charNum + 1) .. " for user ID " .. src
     end,
-    pedscale = function(character, value, fivemid, src)
+    pedscale = function(character, value, fivemid, src, code)
         if not character then
             print("Error: character is nil")
             return false, "Character is nil. Contact server admin."
@@ -66,7 +66,7 @@ Config.RedeemActions = {
         print("Set ped scale to " .. value .. " for character ID " .. character.charIdentifier)
         return true, "Set ped scale to " .. value .. " for character ID " .. character.charIdentifier
     end,
-    reborn = function(character, value, fivemid, src)
+    reborn = function(character, value, fivemid, src, code)
         value = tonumber(value) or 0
         if not src then
             print("Error: src is nil")
@@ -80,7 +80,7 @@ Config.RedeemActions = {
         print("Added reborn token to character ID " .. character.charIdentifier)
         return true, "Added reborn token to character ID " .. character.charIdentifier
     end,
-    namechange = function(character, value, fivemid, src)
+    namechange = function(character, value, fivemid, src, code)
         if not character then
             print("Error: character is nil")
             return false, "Character is nil. Contact server admin."
@@ -102,7 +102,7 @@ Config.RedeemActions = {
         print("Changed name to " .. firstName .. " " .. lastName .. " for character ID " .. character.charIdentifier)
         return true, "Changed name to " .. firstName .. " " .. lastName .. " for character ID " .. character.charIdentifier
     end,
-    addchar = function(character, value, fivemid, src)
+    addchar = function(character, value, fivemid, src, code)
         local max_chars = 5 -- Change this to your desired max characters
         local value = tonumber(value) or 1
         MySQL.query("SELECT char FROM users WHERE identifier = @identifier", {
@@ -131,7 +131,7 @@ Config.RedeemActions = {
         end)
         return false, "Character slot addition not processed. Contact server admin."
     end,
-    vpnaccess = function(character, value, fivemid, src)
+    vpnaccess = function(character, value, fivemid, src, code)
         MySQL.Async.execute([[
             INSERT IGNORE INTO vpn_access (fivemid)
             VALUES (@fivemid)
