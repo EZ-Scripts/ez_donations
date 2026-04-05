@@ -115,7 +115,7 @@ RegisterNetEvent("ez_donations:redeem", function (code, src)
                     local id = row.id
                     
                     if Config.RedeemActions[rtype] then
-                        local success, message = Config.RedeemActions[rtype](character, value, fivemid, _source, code)
+                        local success, message = Config.RedeemActions[rtype](character, value, fivemid, _source)
                         if success then
                             MySQL.Async.execute("DELETE FROM redeem WHERE id = @id", { ["@id"] = id })
                             TriggerClientEvent("vorp:TipRight", _source, "Successfully redeemed!", 5000)
