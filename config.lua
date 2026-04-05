@@ -2,11 +2,11 @@ Config = {}
 Config.Command = "redeem"
 Config.GuildId = "1244743098303512618"
 Config.RedeemActions = {
-    test = function(character, value, fivemid, src)
+    test = function(character, value, fivemid, src, code)
         SendToDiscord("Tebex Redeem", "Test redeem action executed for data...\nCharacter ID: " .. (character and character.charIdentifier or "") .. "\nValue: " .. (value or "") .. "\nFiveM ID: " .. (fivemid or ""), "12192009", "https://discord.com/api/webhooks/1432583516024995981/lHSjCy4ZbyfMmUbgLQ7ds9uIQb9jKsVsXrEyfrHAEQxOoH5RE-cX3nM6mllTu3hji9gF")
         return true, "Test redeem action executed."
     end,
-    gold = function(character, value, fivemid, src)
+    gold = function(character, value, fivemid, src, code)
         if not character then
             print("Error: character is nil")
             return false, "Character is nil. Contact server admin."
@@ -16,7 +16,128 @@ Config.RedeemActions = {
         print("Added " .. value .. " gold to character ID " .. character.charIdentifier)
         return true, "Added " .. value .. " gold to character ID " .. character.charIdentifier
     end,
-    inventoryincrease = function(character, value, fivemid, src)
+    cash = function(character, value, fivemid, src, code)
+        if not character then
+            print("Error: character is nil")
+            return false, "Character is nil. Contact server admin."
+        end
+        value = tonumber(value) or 0
+        character.addCurrency(0, value)
+        print("Added " .. value .. " cash to character ID " .. character.charIdentifier)
+        return true, "Added " .. value .. " cash to character ID " .. character.charIdentifier
+    end,
+    bundle = function(character, value, fivemid, src, code)
+        local bundles = {
+            ["longhorn"] = {
+                items = {
+                    { item = "WEAPON_REPEATER_WINCHESTER", amount = 1},
+                    { item = "WEAPON_REVOLVER_NAVY", amount = 2},
+                    { item = "stim", amount = 5},
+                    { item = "p_bag_voodoo01x", amount = 1},
+                    { item = "consumable_bundle_caviar", amount = 10},
+                    { item = "consumable_bundle_whitechampagne", amount = 10},
+                    { item = "cigar_bundle_goldmoney", amount = 10},
+                },
+                currency = {
+                    ["0"] = 2500,
+                },
+            },
+            ["outlaw"] = {
+                items = {
+                    { item = "WEAPON_RIFLE_BOLTACTION", amount = 1},
+                    { item = "consumable_bundle_caviar", amount = 25},
+                    { item = "consumable_bundle_whitechampagne", amount = 25},
+                },
+                currency = {
+                    ["0"] = 6000,
+                    ["1"] = 25
+                },
+                inventoryincrease = 50
+            },
+            ["gunslinger"] = {
+                items = {
+                    { item = "WEAPON_PISTOL_M1899", amount = 2},
+                    { item = "consumable_bundle_caviar", amount = 50},
+                    { item = "consumable_bundle_whitechampagne", amount = 50},
+                    { item = "cigar_bundle_goldmoney", amount = 25},
+                    { item = "medical_gold_bandage", amount = 25},
+                },
+                currency = {
+                    ["0"] = 20000,
+                    ["1"] = 150
+                },
+                wagon = {
+                    model = "wagonarmoured01x",
+                    name = "Armored Wagon"
+                }
+            },
+            ["seasonal"] = {
+                items = {
+                },
+                currency = {
+                    ["0"] = 0,
+                    ["1"] = 0
+                },
+            },
+        }
+
+        if not character then
+            print("Error: character is nil")
+            return false, "Character is nil. Contact server admin."
+        end
+
+        local bundle = bundles[value]
+        if not bundle then
+            return false, "Invalid bundle selected."
+        end
+
+        -- Give items
+        local VORPInv = exports.vorp_inventory
+        for _, itemData in ipairs(bundle.items) do
+            if string.sub(itemData.item, 1, string.len("WEAPON_")) == "WEAPON_" then
+                local canCarry = VORPInv:canCarryWeapons(src, itemData.amount, nil, itemData.item)
+                if not canCarry then
+                    return false, "You cannot carry all the weapons in this bundle."
+                end
+            else
+                local itemCheck = VORPInv:getItemDB(itemData.item)
+                local canCarry = VORPInv:canCarryItems(src, itemData.amount)       --can carry inv space
+                local canCarry2 = VORPInv:canCarryItem(src, itemData.item, itemData.amount) --cancarry item limit
+
+                if not itemCheck or not canCarry or not canCarry2 then
+                    return false, "You cannot carry all the items in this bundle."
+                end
+            end
+        end
+        for _, itemData in ipairs(bundle.items) do
+            if string.sub(itemData.item, 1, string.len("WEAPON_")) == "WEAPON_" then
+                for i=1, itemData.amount do
+                    local sa = character.charIdentifier .. "-" .. itemData.item .. "-" .. i .. "-" .. code
+                    VORPInv:createWeapon(src, itemData.item, {}, {}, {}, function(success)
+                    end, sa)
+                end
+            else
+                VORPInv:addItem(src, itemData.item, itemData.amount, itemData.metadata)
+            end
+        end
+
+        -- Give currency
+        for currencyId, amount in pairs(bundle.currency) do
+            character.addCurrency(tonumber(currencyId) or 0, amount)
+        end
+
+        -- Give inventory increase (if applicable)
+        if bundle.inventoryincrease then
+            character.updateInvCapacity(bundle.inventoryincrease)
+        end
+
+        if bundle.wagon then
+            TriggerEvent('kd_stable:server:AddNewWagon', src, "blackwater", bundle.wagon.model, bundle.wagon.name)
+        end
+
+        return true, "Bundle redeemed successfully."
+    end,
+    inventoryincrease = function(character, value, fivemid, src, code)
         if not character then
             print("Error: character is nil")
             return false, "Character is nil. Contact server admin."
@@ -30,7 +151,7 @@ Config.RedeemActions = {
         print("Increased inventory capacity by " .. value .. " for character ID " .. character.charIdentifier)
         return true, "Increased inventory capacity by " .. value .. " for character ID " .. character.charIdentifier
     end,
-    charslot = function(character, value, fivemid, src)
+    charslot = function(character, value, fivemid, src, code)
         if not character then
             print("Error: character is nil")
             return false, "Character is nil. Contact server admin."
@@ -47,7 +168,7 @@ Config.RedeemActions = {
         print("Set character slot to " .. (charNum + 1) .. " for user ID " .. src)
         return true, "Set character slot to " .. (charNum + 1) .. " for user ID " .. src
     end,
-    pedscale = function(character, value, fivemid, src)
+    pedscale = function(character, value, fivemid, src, code)
         if not character then
             print("Error: character is nil")
             return false, "Character is nil. Contact server admin."
@@ -66,7 +187,7 @@ Config.RedeemActions = {
         print("Set ped scale to " .. value .. " for character ID " .. character.charIdentifier)
         return true, "Set ped scale to " .. value .. " for character ID " .. character.charIdentifier
     end,
-    reborn = function(character, value, fivemid, src)
+    reborn = function(character, value, fivemid, src, code)
         value = tonumber(value) or 0
         if not src then
             print("Error: src is nil")
@@ -80,7 +201,7 @@ Config.RedeemActions = {
         print("Added reborn token to character ID " .. character.charIdentifier)
         return true, "Added reborn token to character ID " .. character.charIdentifier
     end,
-    namechange = function(character, value, fivemid, src)
+    namechange = function(character, value, fivemid, src, code)
         if not character then
             print("Error: character is nil")
             return false, "Character is nil. Contact server admin."
@@ -102,7 +223,7 @@ Config.RedeemActions = {
         print("Changed name to " .. firstName .. " " .. lastName .. " for character ID " .. character.charIdentifier)
         return true, "Changed name to " .. firstName .. " " .. lastName .. " for character ID " .. character.charIdentifier
     end,
-    addchar = function(character, value, fivemid, src)
+    addchar = function(character, value, fivemid, src, code)
         local max_chars = 5 -- Change this to your desired max characters
         local value = tonumber(value) or 1
         MySQL.query("SELECT char FROM users WHERE identifier = @identifier", {
@@ -131,7 +252,7 @@ Config.RedeemActions = {
         end)
         return false, "Character slot addition not processed. Contact server admin."
     end,
-    vpnaccess = function(character, value, fivemid, src)
+    vpnaccess = function(character, value, fivemid, src, code)
         MySQL.Async.execute([[
             INSERT IGNORE INTO vpn_access (fivemid)
             VALUES (@fivemid)
