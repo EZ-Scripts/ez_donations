@@ -151,6 +151,7 @@ end
 local tiers = {
     emerald = {
         discordrole = "1426786026587820053",
+        rank = 1,
     },
     ruby = {
         currency = {
@@ -158,6 +159,7 @@ local tiers = {
             ["1"] = 10, -- gold
         },
         discordrole = "1426786094233419836",
+        rank = 2
     },
     sapphire = {
         currency = {
@@ -165,6 +167,7 @@ local tiers = {
             ["1"] = 15, -- gold
         },
         discordrole = "1426786135878930492",
+        rank = 3
     },
     diamond = {
         currency = {
@@ -172,14 +175,19 @@ local tiers = {
             ["1"] = 45, -- gold
         },
         discordrole = "1426786193793744938",
+        rank = 4
     },
     topg = {
         currency = {
             ["1"] = 120
         },
-        discordrole = "1474157990067306730"
+        discordrole = "1474157990067306730",
+        rank = 5
     }
 }
+
+local SubCache = {}
+local SUB_CACHE_TTL = 600 -- 10 mins
 
 RegisterCommand("subredeem", function(source, args, rawCommand)
     if source ~= 0 then
@@ -224,6 +232,13 @@ RegisterCommand("subredeem", function(source, args, rawCommand)
                 if user then
                     exports['ez_discord']:GetMemberBySource(user.source)
                 end
+                SubCache[discordid] = {
+                    data = {
+                        tier = tier,
+                        rank = tiers[tier].rank or 0
+                    },
+                    expires = os.time() + SUB_CACHE_TTL
+                }
             else
                 print("No discordid found for charidentifier:", charid)
             end
@@ -288,3 +303,48 @@ AddEventHandler("onResourceStart", function(res)
         print("[tiersub] ✅ Expired subscription purge complete.")
     end)
 end)
+
+function GetSubscriptionByDiscordId(discordid)
+    if not discordid then
+        return {
+            tier = "none",
+            rank = 0
+        }
+    end
+
+    local cached = SubCache[discordid]
+    if cached and cached.expires > os.time() then
+        return cached.data
+    end
+
+    local result = MySQL.query.await([[
+        SELECT tier
+        FROM tier_subs
+        WHERE discordid = ?
+    ]], { discordid })
+
+    local highest = {
+        tier = "none",
+        rank = 0
+    }
+
+    for _, row in ipairs(result) do
+        local tierData = tiers[row.tier]
+
+        if tierData and tierData.rank > highest.rank then
+            highest = {
+                tier = row.tier,
+                rank = tierData.rank
+            }
+        end
+    end
+
+    SubCache[discordid] = {
+        data = highest,
+        expires = os.time() + SUB_CACHE_TTL
+    }
+
+    return highest
+end
+
+exports("GetSubscriptionByDiscordId", GetSubscriptionByDiscordId)
