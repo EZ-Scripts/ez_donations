@@ -172,7 +172,7 @@ local tiers = {
     diamond = {
         currency = {
             --["0"] = 100, -- money
-            ["1"] = 45, -- gold
+            ["1"] = 55, -- gold
         },
         discordrole = "1426786193793744938",
         rank = 4
