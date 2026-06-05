@@ -137,6 +137,19 @@ Config.RedeemActions = {
 
         return true, "Bundle redeemed successfully."
     end,
+    addphonograph = function(character, value, fivemid, src, code)
+        local itemName = "phonograph"
+        local VORPInv = exports.vorp_inventory
+        local itemCheck = VORPInv:getItemDB(itemName)
+        local canCarry = VORPInv:canCarryItems(src, tonumber(value) or 1)       --can carry inv space
+        local canCarry2 = VORPInv:canCarryItem(src, itemName, tonumber(value) or 1) --cancarry item limit
+
+        if not itemCheck or not canCarry or not canCarry2 then
+            return false, "You cannot carry all the items in this bundle."
+        end
+
+        VORPInv:addItem(src, itemName, tonumber(value) or 1, nil)
+    end,
     inventoryincrease = function(character, value, fivemid, src, code)
         if not character then
             print("Error: character is nil")
