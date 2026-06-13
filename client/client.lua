@@ -1,42 +1,35 @@
 RegisterNetEvent("ez_donations:inputRedeem", function()
-    --[[local myInput = {
-        type = "enableinput", -- dont touch
-        inputType = "input", -- or text area for sending messages
-        button = "Redeem", -- button name
-        placeholder = "tbx-xxxxxxxxxx-xxxxx", --placeholdername
-        style = "block", --- dont touch
-        attributes = {
-            inputHeader = "code", -- header
-            type = "text",
-            title = "Tebex transaction id",
-            style = "border-radius: 10px; background-color: ; border:none;", -- style  the inptup
-        }
-    }
-    TriggerEvent("vorpinputs:advancedInput", json.encode(myInput),function(result)
-        if result then
-            TriggerServerEvent("ez_donations:redeem", result)
-        end
-    end)]]
+    SetNuiFocus(true, true)
+    SendNUIMessage({ action = "show" })
+end)
 
-    local inputData = {
-        title = "Redeem Tebex Code",
-        desc = "Please enter your Tebex transaction ID to redeem your purchase.",
-        buttonparam1 = "ACCEPT",
-        buttonparam2 = "DECLINE"
-    }
+RegisterNUICallback('redeemCode', function(data, cb)
+    local code = data.code
+    if code and code ~= "" then
+        TriggerServerEvent("ez_donations:redeem", code)
+    end
+    SetNuiFocus(false, false)
+    cb({})
+end)
 
-    TriggerEvent("tp_inputs:getTextInput", inputData, function(cb)
-        if cb == "DECLINE" or cb == "" then
-            return
-        end
-        TriggerServerEvent("ez_donations:redeem", cb)
-    end) 
+RegisterNUICallback('cancel', function(_, cb)
+    SetNuiFocus(false, false)
+    cb({})
+end)
+
+RegisterNUICallback('playSound', function(data, cb)
+    local sound    = data.sound    or "SELECT"
+    local soundset = data.soundset or "HUD_SHOP_SOUNDSET"
+    PlaySoundFrontend(-1, sound, soundset, true)
+    cb({})
 end)
 
 if Config.Command then
-TriggerEvent("chat:addSuggestion", "/".. Config.Command, "Redeem a Tebex code", {
-    { name = "code", help = "Tebex transaction id" }
-})
+    TriggerEvent("chat:addSuggestion", "/" .. Config.Command, "Redeem a Tebex code", {
+    })
+    RegisterCommand(Config.Command, function(source, args, rawCommand)
+        TriggerEvent("ez_donations:inputRedeem")
+    end, false)
 end
 
 RegisterCommand("mycharid", function(source, args, rawCommand)
@@ -51,5 +44,4 @@ RegisterCommand("mycharid", function(source, args, rawCommand)
     end
 end, false)
 
-TriggerEvent("chat:addSuggestion", "/mycharid", "Show your character ID", {
-})
+TriggerEvent("chat:addSuggestion", "/mycharid", "Show your character ID", {})

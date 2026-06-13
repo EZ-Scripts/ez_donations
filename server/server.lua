@@ -136,17 +136,6 @@ RegisterNetEvent("ez_donations:redeem", function (code, src)
     end
 end)
 
--- Command for players to redeem their Tebex codes
-if Config.Command then
-    RegisterCommand(Config.Command, function(source, args, rawCommand)
-        local code = args[1]
-        if not code then
-            TriggerClientEvent("vorp:TipRight", source, "Usage: "..Config.Command.." <code>", 5000)
-            return
-        end
-        TriggerEvent("ez_donations:redeem", code, source)
-    end, false)
-end
 
 local tiers = {
     emerald = {

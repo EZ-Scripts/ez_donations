@@ -6,6 +6,14 @@ author 'Rayaan Uddin'
 description 'Tebex donation system for RedM using VORP'
 version '1.0'
 
+ui_page 'html/index.html'
+
+files {
+    'html/index.html',
+    'html/style.css',
+    'html/script.js'
+}
+
 shared_script {'config.lua'}
 
 server_script {
