@@ -1,5 +1,5 @@
 Config = {}
-Config.Command = "redeem"
+Config.Command = false
 Config.GuildId = "1244743098303512618"
 Config.RedeemActions = {
     test = function(character, value, fivemid, src, code)
@@ -149,6 +149,7 @@ Config.RedeemActions = {
         end
 
         VORPInv:addItem(src, itemName, tonumber(value) or 1, nil)
+        return true, "Given phonograph"
     end,
     inventoryincrease = function(character, value, fivemid, src, code)
         if not character then

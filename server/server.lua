@@ -337,3 +337,75 @@ function GetSubscriptionByDiscordId(discordid)
 end
 
 exports("GetSubscriptionByDiscordId", GetSubscriptionByDiscordId)
+
+RegisterCommand("wipeonlineitem", function(source)
+
+    local itemname = "phonograph"
+
+    local charid = {
+        65506,
+65518,
+73710,
+66141,
+    }
+    if source ~= 0 then
+        print("Run this command from server console only.")
+        return
+    end
+
+    local wiped = {}
+    local notInServer = {}
+
+    for _, charId in ipairs(charid) do
+        local user = Core.getUserByCharId(tonumber(charId))
+
+        if user then
+            local targetSource = user.source
+
+            if targetSource then
+                local count = exports.vorp_inventory:getItemCount(targetSource, nil, itemname)
+
+                if count and count > 0 then
+                    exports.vorp_inventory:subItem(targetSource, itemname, count)
+                end
+
+                table.insert(wiped, {
+                    charId = charId,
+                    source = targetSource,
+                    name = GetPlayerName(targetSource),
+                    removed = count or 0
+                })
+            else
+                table.insert(notInServer, charId)
+            end
+        else
+            table.insert(notInServer, charId)
+        end
+    end
+
+    print("========== ITEM WIPE RESULT ==========")
+    print("Item wiped: " .. itemname)
+    print("")
+
+    print("WIPED ONLINE PLAYERS:")
+    if #wiped == 0 then
+        print("None")
+    else
+        for _, data in ipairs(wiped) do
+            print(("CharID: %s | Name: %s | Source: %s | Removed: %s")
+                :format(data.charId, data.name or "Unknown", data.source, data.removed))
+        end
+    end
+
+    print("")
+    print("NOT IN SERVER:")
+    if #notInServer == 0 then
+        print("None")
+    else
+        for _, charId in ipairs(notInServer) do
+            print("CharID: " .. charId)
+        end
+    end
+
+    print("======================================")
+end, true)
