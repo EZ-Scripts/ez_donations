@@ -73,9 +73,30 @@ Config.RedeemActions = {
             },
             ["seasonal"] = {
                 items = {
+                    {
+                        item = "WEAPON_SNIPERRIFLE_CARCANO",
+                        amount = 1,
+                        label = 'LIBERTY',
+                        description = '"This nation will remain the land of the free only so long as it is the home of the brave."',
+                        comps = '{"BARREL_RIFLING":"COMPONENT_LONGARM_BARREL_RIFLING_1","CYLINDER_MATERIAL":"COMPONENT_LONGARM_CYLINDER_MATERIAL_10","BARREL_MATERIAL":"COMPONENT_LONGARM_BARREL_MATERIAL_10","GRIPSTOCK_TINT":"COMPONENT_LONGARM_GRIPSTOCK_TINT_PEARL","GRIP":"COMPONENT_RIFLE_CARCANO_GRIP_ENGRAVED","FRAME_ENGRAVING_MATERIAL":"COMPONENT_LONGARM_FRAME_ENGRAVING_MATERIAL_12","_ID":445035,"WRAP_TINT":"COMPONENT_LONGARM_WRAP_TINT_C_6","TRIGGER_MATERIAL":"COMPONENT_LONGARM_TRIGGER_MATERIAL_10","FRAME_MATERIAL":"COMPONENT_LONGARM_FRAME_MATERIAL_4","HAMMER_MATERIAL":"COMPONENT_LONGARM_HAMMER_MATERIAL_10","WRAP_MATERIAL":"COMPONENT_LONGARM_WRAP_MATERIAL_LEATHER","FRAME_ENGRAVING":"COMPONENT_LONGARM_FRAME_ENGRAVING_4","CYLINDER_ENGRAVING_MATERIAL":"COMPONENT_LONGARM_CYLINDER_ENGRAVING_MATERIAL_12","STRAP":"COMPONENT_RIFLE_CS_STRAP01","CYLINDER_ENGRAVING":"COMPONENT_LONGARM_CYLINDER_ENGRAVING_1","BARREL_ENGRAVING":"COMPONENT_LONGARM_BARREL_ENGRAVING_4","WRAP":"COMPONENT_RIFLE_CARCANO_WRAP6","SIGHT":"COMPONENT_RIFLE_CARCANO_SIGHT_WIDE","BARREL_ENGRAVING_MATERIAL":"COMPONENT_LONGARM_BARREL_ENGRAVING_MATERIAL_12","CLIP":"COMPONENT_RIFLE_CARCANO_CLIP_EMPTY"}',
+                        serial_number = "1776"
+                    },
+                    {
+                        item = "WEAPON_SHOTGUN_SEMIAUTO",
+                        amount = 1,
+                        label = 'DECLARATION',
+                        description = '"We hold these truths to be self-evident, that all men are created equal..."',
+                        comps = '{"SIGHT_MATERIAL":"COMPONENT_LONGARM_SIGHT_MATERIAL_10","CYLINDER_MATERIAL":"COMPONENT_LONGARM_CYLINDER_MATERIAL_10","BARREL_MATERIAL":"COMPONENT_LONGARM_BARREL_MATERIAL_3","GRIPSTOCK_TINT":"COMPONENT_LONGARM_GRIPSTOCK_TINT_PEARL","GRIP":"COMPONENT_SHOTGUN_SEMIAUTO_GRIP","FRAME_ENGRAVING_MATERIAL":"COMPONENT_LONGARM_FRAME_ENGRAVING_MATERIAL_12","_ID":445034,"WRAP_TINT":"COMPONENT_LONGARM_WRAP_TINT_B_5","TRIGGER_MATERIAL":"COMPONENT_LONGARM_TRIGGER_MATERIAL_10","FRAME_MATERIAL":"COMPONENT_LONGARM_FRAME_MATERIAL_4","HAMMER_MATERIAL":"COMPONENT_LONGARM_HAMMER_MATERIAL_4","GRIPSTOCK_ENGRAVING":"COMPONENT_LONGARM_GRIPSTOCK_ENGRAVING_3","FRAME_ENGRAVING":"COMPONENT_SHOTGUN_FRAME_ENGRAVING_4","CYLINDER_ENGRAVING_MATERIAL":"COMPONENT_LONGARM_CYLINDER_ENGRAVING_MATERIAL_13","BARREL":"COMPONENT_SHOTGUN_SEMIAUTO_BARREL_LONG","BARREL_RIFLING":"COMPONENT_LONGARM_BARREL_RIFLING_1","SIGHT":"COMPONENT_SHOTGUN_SEMIAUTO_SIGHT_WIDE","WRAP":"COMPONENT_SHOTGUN_SEMIAUTO_WRAP2","CYLINDER_ENGRAVING":"COMPONENT_SHOTGUN_CYLINDER_ENGRAVING_3","BARREL_ENGRAVING_MATERIAL":"COMPONENT_LONGARM_BARREL_ENGRAVING_MATERIAL_14","BARREL_ENGRAVING":"COMPONENT_SHOTGUN_BARREL_ENGRAVING_3"}',
+                        serial_number = "1776"
+                    },
+                    { item = "seasonal_stim_liberty_boost", amount = 20},
+                    { item = "seasonal_star_spangled_spritz", amount = 20},
+                    { item = "seasonal_cigar_firecracker", amount = 20},
+                    { item = "firework_small", amount = 5},
+                    { item = "firework_big", amount = 5},
                 },
                 currency = {
-                    ["0"] = 0,
+                    ["0"] = 2500,
                     ["1"] = 0
                 },
             },
@@ -112,9 +133,9 @@ Config.RedeemActions = {
         for _, itemData in ipairs(bundle.items) do
             if string.sub(itemData.item, 1, string.len("WEAPON_")) == "WEAPON_" then
                 for i=1, itemData.amount do
-                    local sa = character.charIdentifier .. "-" .. itemData.item .. "-" .. i .. "-" .. code
-                    VORPInv:createWeapon(src, itemData.item, {}, {}, {}, function(success)
-                    end, sa)
+                    local sa =  (itemData.serial_number or itemData.item) .. "-char" .. character.charIdentifier .. "-" .. i .. "-" .. code .. "-" .. math.random(100000, 999999)
+                    VORPInv:createWeapon(src, itemData.item, {}, {}, itemData.comps or {}, function(success)
+                    end, nil, sa, itemData.label or nil, itemData.description or nil)
                 end
             else
                 VORPInv:addItem(src, itemData.item, itemData.amount, itemData.metadata)
