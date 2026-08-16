@@ -338,15 +338,37 @@ end
 
 exports("GetSubscriptionByDiscordId", GetSubscriptionByDiscordId)
 
+function GetSubscriptionByCharId(charid)
+    if not charid then
+        return {
+            tier = "none",
+            rank = 0
+        }
+    end
+
+    local discordid = MySQL.query.await("SELECT discordid FROM characters WHERE charidentifier = ?", { charid })[1]?.discordid
+
+    if not discordid then
+        return {
+            tier = "none",
+            rank = 0
+        }
+    end
+
+    return GetSubscriptionByDiscordId(discordid)
+end
+
+exports("GetSubscriptionByCharId", GetSubscriptionByCharId)
+
 RegisterCommand("wipeonlineitem", function(source)
 
     local itemname = "phonograph"
 
     local charid = {
         65506,
-65518,
-73710,
-66141,
+        65518,
+        73710,
+        66141,
     }
     if source ~= 0 then
         print("Run this command from server console only.")
