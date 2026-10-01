@@ -153,7 +153,7 @@ local tiers = {
     sapphire = {
         currency = {
             --["0"] = 100, -- money
-            ["1"] = 15, -- gold
+            ["1"] = 20, -- gold
         },
         discordrole = "1426786135878930492",
         rank = 3
@@ -161,14 +161,14 @@ local tiers = {
     diamond = {
         currency = {
             --["0"] = 100, -- money
-            ["1"] = 55, -- gold
+            ["1"] = 70, -- gold
         },
         discordrole = "1426786193793744938",
         rank = 4
     },
     topg = {
         currency = {
-            ["1"] = 120
+            ["1"] = 100
         },
         discordrole = "1474157990067306730",
         rank = 5
