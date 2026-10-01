@@ -17,25 +17,46 @@ CreateThread(function()
     end)
 end)
 
-function SendToDiscord(name, message, color, webhook)
-    local connect = {
-        {
-            ["color"] = color or "12192009",
-            ["title"] = "**".. name .."**",
-            ["description"] = message,
-            ["footer"] = {
-                ["text"] = "Date : " .. os.date("%Y-%m-%d %X"),
-            },
-        },
+function SendToDiscord(name, message, color, webhook, opts)
+    -- opts: optional table { author = {name=.., icon_url=..}, fields = {...}, thumbnail = url, footer = {text=..} }
+    local embed = {
+        title = name and tostring(name) or "Notification",
+        description = message and tostring(message) or nil,
+        color = tonumber(color) or 12192009,
+        timestamp = os.date("%Y-%m-%dT%H:%M:%SZ"),
     }
+
+    if opts and opts.author then
+        embed.author = opts.author
+    end
+
+    if opts and opts.thumbnail then
+        embed.thumbnail = { url = opts.thumbnail }
+    end
+
+    if opts and opts.fields and type(opts.fields) == 'table' then
+        embed.fields = {}
+        for _, f in ipairs(opts.fields) do
+            table.insert(embed.fields, {
+                name = f.name or "",
+                value = f.value and tostring(f.value) or "",
+                inline = f.inline == true
+            })
+        end
+    end
+
+    embed.footer = opts and opts.footer or { text = "Date : " .. os.date("%Y-%m-%d %X") }
+
+    local payload = {
+        username = (SConfig and SConfig.Discord and SConfig.Discord.Profile and SConfig.Discord.Profile.name) or "Server",
+        avatar_url = (SConfig and SConfig.Discord and SConfig.Discord.Profile and SConfig.Discord.Profile.image) or nil,
+        embeds = { embed }
+    }
+
     PerformHttpRequest(
         webhook or "https://discord.com/api/webhooks/1146033494217199656/XePkJmIfI73ZP1_K9ycxcOMAoTtzdNKekkJ6lOgVGi222ZWO31AP4174pxbXl2N9xHJF",
         function(err, text, headers) end, 'POST', 
-        json.encode({
-            username = SConfig.Discord.Profile.name, 
-            embeds = connect, 
-            avatar_url = SConfig.Discord.Profile.image
-        }), { ['Content-Type'] = 'application/json' }
+        json.encode(payload), { ['Content-Type'] = 'application/json' }
     )
 end
 
@@ -82,7 +103,16 @@ RegisterCommand("tebexredeem", function(source, args, rawCommand)
             ["@value"] = value,
             ["@fivemid"] = fivemid
         })
-        SendToDiscord("Tebex Purchase", "Added Tebex redeem code " .. code .. " for " .. rtype .. " with value " .. value .. " by fivemid: "..fivemid, "12192009", SConfig.Webhook.purchase)
+        SendToDiscord("Tebex Purchase", nil, "12192009", SConfig.Webhook.purchase, {
+            author = { name = "Tebex Purchase" },
+            fields = {
+                { name = "Code", value = code, inline = true },
+                { name = "Type", value = rtype, inline = true },
+                { name = "Value", value = tostring(value), inline = true },
+                { name = "FiveM ID", value = tostring(fivemid), inline = true }
+            },
+            footer = { text = "Added by server console on " .. os.date("%Y-%m-%d %X") }
+        })
         print("Added Tebex redeem code " .. code .. " for " .. rtype .. " with value " .. value .. " by fivemid: "..fivemid)
     end
 end, true)
@@ -119,7 +149,17 @@ RegisterNetEvent("ez_donations:redeem", function (code, src)
                         if success then
                             MySQL.Async.execute("DELETE FROM redeem WHERE id = @id", { ["@id"] = id })
                             TriggerClientEvent("vorp:TipRight", _source, "Successfully redeemed!", 5000)
-                            SendToDiscord("Tebex Redeem", "Redeemed Tebex code " .. code .. " for " .. rtype .. " with value " .. value, "12192009", SConfig.Webhook.redeem)
+                            SendToDiscord("Tebex Redeem", nil, "12192009", SConfig.Webhook.redeem, {
+                                author = { name = GetPlayerName(_source) or "Unknown Player" },
+                                fields = {
+                                    { name = "Code", value = code or "N/A", inline = true },
+                                    { name = "Type", value = rtype or "N/A", inline = true },
+                                    { name = "Value", value = tostring(value) or "N/A", inline = true },
+                                    { name = "Player", value = (GetPlayerName(_source) or "Unknown") .. " (src: "..tostring(_source)..")", inline = false },
+                                    { name = "FiveM ID", value = tostring(fivemid or "N/A"), inline = true }
+                                },
+                                footer = { text = "Redeemed on " .. os.date("%Y-%m-%d %X") }
+                            })
                         else
                             TriggerClientEvent("vorp:TipRight", _source, "Error: "..message, 5000)
                         end
@@ -365,10 +405,10 @@ RegisterCommand("wipeonlineitem", function(source)
     local itemname = "phonograph"
 
     local charid = {
-        65506,
-        65518,
-        73710,
-        66141,
+        -- 65506,
+        -- 65518,
+        -- 73710,
+        -- 66141,
     }
     if source ~= 0 then
         print("Run this command from server console only.")
