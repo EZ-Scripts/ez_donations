@@ -71,7 +71,7 @@ Config.RedeemActions = {
                     name = "Armored Wagon"
                 }
             },
-            ["seasonal"] = {
+            --[[["seasonal"] = { -- 4th of July
                 items = {
                     {
                         item = "WEAPON_SNIPERRIFLE_CARCANO",
@@ -98,6 +98,20 @@ Config.RedeemActions = {
                 currency = {
                     ["0"] = 2500,
                     ["1"] = 0
+                },
+            },]]
+            ["seasonal"] = {
+                items = {
+                    { item = "consumable_vampireshot_halloween", amount = 10},
+                    { item = "consumable_halloween_cakepop", amount = 10},
+                    { item = "cigar_halloween", amount = 10},
+                    { item = "stimapple_halloween", amount = 10},
+                    { item = "weapon_melee_lantern_halloween", amount = 1},
+                    { item = "wearable_pumpkin1", amount = 1},
+                },
+                currency = {
+                    ["0"] = 2500, -- Cash
+                    ["1"] = 0 -- Gold
                 },
             },
         }
