@@ -106,7 +106,7 @@ Config.RedeemActions = {
                     { item = "consumable_halloween_cakepop", amount = 10},
                     { item = "cigar_halloween", amount = 10},
                     { item = "stimapple_halloween", amount = 10},
-                    { item = "weapon_melee_lantern_halloween", amount = 1},
+                    { item = "WEAPON_MELEE_LANTERN_HALLOWEEN", amount = 1},
                     { item = "wearable_pumpkin1", amount = 1},
                 },
                 currency = {
