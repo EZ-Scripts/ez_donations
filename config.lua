@@ -12,7 +12,7 @@ Config.RedeemActions = {
             return false, "Character is nil. Contact server admin."
         end
         value = tonumber(value) or 0
-        character.addCurrency(1, value)
+        character.addCurrency(1, value, true) -- skip gold anti-cheat
         print("Added " .. value .. " gold to character ID " .. character.charIdentifier)
         return true, "Added " .. value .. " gold to character ID " .. character.charIdentifier
     end,
@@ -144,7 +144,7 @@ Config.RedeemActions = {
 
         -- Give currency
         for currencyId, amount in pairs(bundle.currency) do
-            character.addCurrency(tonumber(currencyId) or 0, amount)
+            character.addCurrency(tonumber(currencyId) or 0, amount, true) -- skip gold anti-cheat
         end
 
         -- Give inventory increase (if applicable)

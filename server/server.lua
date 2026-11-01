@@ -279,7 +279,7 @@ RegisterCommand("subredeem", function(source, args, rawCommand)
         if user then character = user.getUsedCharacter end
         if character then
             for k, v in pairs(tierData.currency) do
-                character.addCurrency(tonumber(k), v)
+                character.addCurrency(tonumber(k), v, true) -- skip gold anti-cheat
             end
         else
             for k, v in pairs(tierData.currency) do
